@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AICO | Industrial Fire Detection System</title>
+    <link rel="stylesheet" href="src/css/dashboard.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&family=Roboto+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js"></script>
+    <script src="mqtt.js"></script>
+</head>
+<body>
+    <!-- Boot Sequence Overlay -->
+    <div class="boot-overlay" id="bootOverlay">
+        <div class="boot-container">
+            <div class="boot-logo">
+                <div class="boot-logo-icon">
+                    <svg viewBox="0 0 100 100" class="boot-svg">
+                        <polygon class="boot-hex" points="50,3 97,25 97,75 50,97 3,75 3,25"/>
+                        <text x="50" y="58" class="boot-text">AICO</text>
+                    </svg>
+                </div>
+            </div>
+            <div class="boot-progress">
+                <div class="boot-progress-bar" id="bootProgress"></div>
+            </div>
+            <div class="boot-status" id="bootStatus">SYSTEM INITIALIZATION</div>
+            <div class="boot-log" id="bootLog"></div>
+        </div>
+        <div class="scanline"></div>
+    </div>
+
+    <!-- Alarm Vignette Effect -->
+    <div class="alarm-vignette" id="alarmVignette"></div>
+
+    <!-- Main Dashboard Container -->
+    <div class="dashboard-hud">
+        <!-- Left Sidebar -->
+        <nav class="sidebar-hud">
+            <div class="sidebar-header">
+                <div class="logo-hud">
+                    <div class="logo-hexagon">
+                        <svg viewBox="0 0 60 60">
+                            <polygon class="hex-border" points="30,2 56,16 56,44 30,58 4,44 4,16"/>
+                            <polygon class="hex-fill" points="30,6 52,18 52,42 30,54 8,42 8,18"/>
+                        </svg>
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="logo-text-hud">
+                        <span class="logo-title-hud">AICO</span>
+                        <span class="logo-subtitle-hud">FIRE DETECTION</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-menu-hud">
+                <button class="menu-item-hud active" data-page="dashboard">
+                    <div class="menu-bracket left">[</div>
+                    <i class="fas fa-th-large"></i>
+                    <span>DASHBOARD</span>
+                    <div class="menu-bracket right">]</div>
+                </button>
+                <button class="menu-item-hud" data-page="sensors">
+                    <div class="menu-bracket left">[</div>
+                    <i class="fas fa-microchip"></i>
+                    <span>SENSORS</span>
+                    <div class="menu-bracket right">]</div>
+                </button>
+                <button class="menu-item-hud" data-page="analytics">
+                    <div class="menu-bracket left">[</div>
+                    <i class="fas fa-chart-line"></i>
+                    <span>ANALYTICS</span>
+                    <div class="menu-bracket right">]</div>
+                </button>
+                <button class="menu-item-hud" data-page="alerts">
+                    <div class="menu-bracket left">[</div>
+                    <i class="fas fa-bell"></i>
+                    <span>ALERTS</span>
+                    <div class="menu-bracket right">]</div>
+                    <span class="alert-badge-hud" id="sidebarAlertCount">0</span>
+                </button>
+            </div>
+
+            <div class="sidebar-footer-hud">
+                <div class="connection-hud" id="connectionStatus">
+                    <div class="conn-indicator"></div>
+                    <span class="conn-text">MQTT OFFLINE</span>
+                </div>
+                <div class="system-clock">
+                    <div class="clock-label">SYS TIME</div>
+                    <div class="clock-value" id="systemTime">--:--:--</div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-hud">
+            <!-- Top Header Bar -->
+            <header class="header-hud">
+                <div class="header-left">
+                    <div class="page-title-hud">
+                        <span class="title-bracket">[</span>
+                        <h1 id="pageTitle">DASHBOARD</h1>
+                        <span class="title-bracket">]</span>
+                    </div>
+                    <div class="breadcrumb-hud">
+                        <span>AICO</span>
+                        <span class="breadcrumb-sep">//</span>
+                        <span id="breadcrumbPage">DASHBOARD</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="header-stat-hud board-health">
+                        <div class="stat-icon-hud">
+                            <i class="fas fa-heartbeat"></i>
+                        </div>
+                        <div class="stat-content-hud">
+                            <span class="stat-label-hud">BOARD HEALTH</span>
+                            <span class="stat-value-hud" id="boardHealthDisplay">0.00%</span>
+                        </div>
+                    </div>
+                    <div class="header-stats-group">
+                        <div class="header-stat-mini normal">
+                            <span class="stat-num" id="onlineSensors">0</span>
+                            <span class="stat-lbl">ONLINE</span>
+                        </div>
+                        <div class="header-stat-mini warning">
+                            <span class="stat-num" id="warningCount">0</span>
+                            <span class="stat-lbl">WARNING</span>
+                        </div>
+                        <div class="header-stat-mini critical">
+                            <span class="stat-num" id="criticalCount">0</span>
+                            <span class="stat-lbl">CRITICAL</span>
+                        </div>
+                    </div>
+                    <div class="live-indicator-hud">
+                        <div class="live-pulse"></div>
+                        <span>LIVE</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Page -->
+            <div class="page-hud active" id="page-dashboard">
+                <!-- Device Selector Toolbar -->
+                <div class="toolbar-hud">
+                    <div class="device-selector-hud" id="dashboardDeviceSelector">
+                        <button class="device-btn active" data-device="0">
+                            <div class="device-led"></div>
+                            <span>PANEL #1</span>
+                            <span class="device-tag">PRIMARY</span>
+                        </button>
+                        <button class="device-btn" data-device="1">
+                            <div class="device-led"></div>
+                            <span>PANEL #2</span>
+                        </button>
+                        <button class="device-btn" data-device="2">
+                            <div class="device-led"></div>
+                            <span>PANEL #3</span>
+                        </button>
+                    </div>
+                    <div class="toolbar-stats">
+                        <div class="toolbar-stat">
+                            <span class="tstat-label">TOTAL POWER</span>
+                            <span class="tstat-value" id="dashTotalPower">0.00 kW</span>
+                        </div>
+                        <div class="toolbar-stat">
+                            <span class="tstat-label">AVG TEMP</span>
+                            <span class="tstat-value" id="dashAvgTemp">--°C</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Dashboard Grid -->
+                <div class="dashboard-grid-hud">
+                    <!-- Left Column - Key Metrics -->
+                    <div class="metrics-column-hud">
+                        <!-- System Health Card -->
+                        <div class="card-hud system-health-card">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="card-header-hud">
+                                <span class="card-title-hud">SYSTEM STATUS</span>
+                                <div class="status-led-group" id="systemStatusIndicator">
+                                    <div class="status-led active"></div>
+                                    <span>OPERATIONAL</span>
+                                </div>
+                            </div>
+                            <div class="health-display-hud">
+                                <div class="health-gauge">
+                                    <svg viewBox="0 0 120 120" class="gauge-svg">
+                                        <defs>
+                                            <linearGradient id="healthGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                                <stop offset="0%" style="stop-color:#45a29e"/>
+                                                <stop offset="100%" style="stop-color:#66fcf1"/>
+                                            </linearGradient>
+                                        </defs>
+                                        <circle class="gauge-track" cx="60" cy="60" r="52"/>
+                                        <circle class="gauge-progress" cx="60" cy="60" r="52" id="healthRingProgress"/>
+                                        <circle class="gauge-inner" cx="60" cy="60" r="42"/>
+                                    </svg>
+                                    <div class="gauge-center">
+                                        <span class="gauge-value" id="healthPercent">0</span>
+                                        <span class="gauge-unit">%</span>
+                                    </div>
+                                    <div class="gauge-ticks">
+                                        <div class="tick" style="--angle: 0deg;"></div>
+                                        <div class="tick" style="--angle: 30deg;"></div>
+                                        <div class="tick" style="--angle: 60deg;"></div>
+                                        <div class="tick" style="--angle: 90deg;"></div>
+                                        <div class="tick" style="--angle: 120deg;"></div>
+                                        <div class="tick" style="--angle: 150deg;"></div>
+                                        <div class="tick" style="--angle: 180deg;"></div>
+                                        <div class="tick" style="--angle: 210deg;"></div>
+                                        <div class="tick" style="--angle: 240deg;"></div>
+                                        <div class="tick" style="--angle: 270deg;"></div>
+                                        <div class="tick" style="--angle: 300deg;"></div>
+                                        <div class="tick" style="--angle: 330deg;"></div>
+                                    </div>
+                                </div>
+                                <div class="health-stats-hud">
+                                    <div class="health-stat-item normal">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span class="stat-count" id="normalSensorCount">0</span>
+                                        <span class="stat-name">NORMAL</span>
+                                    </div>
+                                    <div class="health-stat-item warning">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span class="stat-count" id="warningSensorCount">0</span>
+                                        <span class="stat-name">WARNING</span>
+                                    </div>
+                                    <div class="health-stat-item critical">
+                                        <i class="fas fa-radiation"></i>
+                                        <span class="stat-count" id="criticalSensorCount">0</span>
+                                        <span class="stat-name">CRITICAL</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Temperature Card -->
+                        <div class="card-hud sensor-card" data-sensor="temperature">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="sensor-header-hud">
+                                <div class="sensor-icon-hud temp">
+                                    <i class="fas fa-thermometer-half"></i>
+                                </div>
+                                <div class="sensor-info-hud">
+                                    <span class="sensor-name-hud">TEMPERATURE</span>
+                                    <span class="sensor-type-hud">THERMAL SENSOR</span>
+                                </div>
+                                <div class="sensor-status-hud" id="temp-card-status">
+                                    <span class="status-badge-hud normal">NORMAL</span>
+                                </div>
+                            </div>
+                            <div class="sensor-value-hud">
+                                <span class="value-big" id="temp-card-value">0.0</span>
+                                <span class="value-unit">°C</span>
+                            </div>
+                            <div class="sensor-range-hud">
+                                <span>MIN: <strong id="temp-min">--</strong></span>
+                                <span>MAX: <strong id="temp-max">--</strong></span>
+                            </div>
+                            <div class="oscilloscope" id="temp-sparkline"></div>
+                        </div>
+
+                        <!-- Humidity Card -->
+                        <div class="card-hud sensor-card" data-sensor="humidity">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="sensor-header-hud">
+                                <div class="sensor-icon-hud humidity">
+                                    <i class="fas fa-droplet"></i>
+                                </div>
+                                <div class="sensor-info-hud">
+                                    <span class="sensor-name-hud">HUMIDITY</span>
+                                    <span class="sensor-type-hud">MOISTURE SENSOR</span>
+                                </div>
+                                <div class="sensor-status-hud" id="humidity-card-status">
+                                    <span class="status-badge-hud normal">NORMAL</span>
+                                </div>
+                            </div>
+                            <div class="sensor-value-hud">
+                                <span class="value-big" id="humidity-card-value">0.0</span>
+                                <span class="value-unit">%</span>
+                            </div>
+                            <div class="sensor-range-hud">
+                                <span>MIN: <strong id="humidity-min">--</strong></span>
+                                <span>MAX: <strong id="humidity-max">--</strong></span>
+                            </div>
+                            <div class="oscilloscope" id="humidity-sparkline"></div>
+                        </div>
+
+                        <!-- CO Card -->
+                        <div class="card-hud sensor-card" data-sensor="co">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="sensor-header-hud">
+                                <div class="sensor-icon-hud co">
+                                    <i class="fas fa-skull-crossbones"></i>
+                                </div>
+                                <div class="sensor-info-hud">
+                                    <span class="sensor-name-hud">CARBON MONOXIDE</span>
+                                    <span class="sensor-type-hud">CO DETECTOR</span>
+                                </div>
+                                <div class="sensor-status-hud" id="co-card-status">
+                                    <span class="status-badge-hud normal">NORMAL</span>
+                                </div>
+                            </div>
+                            <div class="sensor-value-hud">
+                                <span class="value-big" id="co-card-value">0.0</span>
+                                <span class="value-unit">ppm</span>
+                            </div>
+                            <div class="sensor-range-hud">
+                                <span>MIN: <strong id="co-min">--</strong></span>
+                                <span>MAX: <strong id="co-max">--</strong></span>
+                            </div>
+                            <div class="oscilloscope" id="co-sparkline"></div>
+                        </div>
+                    </div>
+
+                    <!-- Center Column - 3D Digital Twin -->
+                    <div class="scene-column-hud">
+                        <div class="card-hud scene-card">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="scene-header-hud">
+                                <span class="scene-title-hud">DIGITAL TWIN // FACILITY MONITORING</span>
+                                <div class="scene-controls-hud">
+                                    <button class="scene-btn-hud" id="resetView" title="Reset View">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                    <button class="scene-btn-hud" id="toggleWireframe" title="Toggle Wireframe">
+                                        <i class="fas fa-cube"></i>
+                                    </button>
+                                    <button class="scene-btn-hud" id="toggleGrid" title="Toggle Grid">
+                                        <i class="fas fa-border-all"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="threejs-container" id="threejsContainer">
+                                <canvas id="threejsCanvas"></canvas>
+                                <div class="scene-overlay">
+                                    <div class="sensor-tooltip" id="sensorTooltip"></div>
+                                </div>
+                                <div class="scene-hud-overlay">
+                                    <div class="hud-corner-tl">
+                                        <span class="hud-label">FLOOR 1</span>
+                                        <span class="hud-data" id="hudFloor1Status">OK</span>
+                                    </div>
+                                    <div class="hud-corner-tr">
+                                        <span class="hud-label">FLOOR 2</span>
+                                        <span class="hud-data" id="hudFloor2Status">OK</span>
+                                    </div>
+                                    <div class="hud-corner-bl">
+                                        <span class="hud-label">FLOOR 3</span>
+                                        <span class="hud-data" id="hudFloor3Status">OK</span>
+                                    </div>
+                                    <div class="hud-corner-br">
+                                        <span class="hud-label">TOTAL</span>
+                                        <span class="hud-data" id="hudTotalSensors">12</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="ai-analysis-hud">
+                                <div class="ai-icon-hud">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <p class="ai-text-hud" id="aiAnalysisText">SYSTEM INITIALIZING // AWAITING SENSOR DATA...</p>
+                                <span class="ai-time-hud" id="aiAnalysisTime">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column - Secondary Metrics -->
+                    <div class="sensors-column-hud">
+                        <!-- Gas Card -->
+                        <div class="card-hud sensor-card compact" data-sensor="gas">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="sensor-header-hud">
+                                <div class="sensor-icon-hud gas">
+                                    <i class="fas fa-wind"></i>
+                                </div>
+                                <div class="sensor-info-hud">
+                                    <span class="sensor-name-hud">GAS RESISTANCE</span>
+                                    <span class="sensor-type-hud">GAS SENSOR</span>
+                                </div>
+                                <div class="sensor-status-hud" id="gas-card-status">
+                                    <span class="status-badge-hud normal">NORMAL</span>
+                                </div>
+                            </div>
+                            <div class="sensor-value-hud">
+                                <span class="value-big" id="gas-card-value">0.0</span>
+                                <span class="value-unit">Ohm</span>
+                            </div>
+                            <div class="oscilloscope" id="gas-sparkline"></div>
+                        </div>
+
+                        <!-- Air Quality Card -->
+                        <div class="card-hud sensor-card compact" data-sensor="air-quality">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="sensor-header-hud">
+                                <div class="sensor-icon-hud air">
+                                    <i class="fas fa-smog"></i>
+                                </div>
+                                <div class="sensor-info-hud">
+                                    <span class="sensor-name-hud">AIR QUALITY</span>
+                                    <span class="sensor-type-hud">AQI MONITOR</span>
+                                </div>
+                                <div class="sensor-status-hud" id="air-quality-card-status">
+                                    <span class="status-badge-hud normal">NORMAL</span>
+                                </div>
+                            </div>
+                            <div class="sensor-value-hud">
+                                <span class="value-big" id="air-quality-card-value">0.0</span>
+                                <span class="value-unit">AQI</span>
+                            </div>
+                            <div class="oscilloscope" id="air-quality-sparkline"></div>
+                        </div>
+
+                        <!-- Surface Temp Card -->
+                        <div class="card-hud sensor-card compact" data-sensor="surface-temp">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="sensor-header-hud">
+                                <div class="sensor-icon-hud surface">
+                                    <i class="fas fa-temperature-high"></i>
+                                </div>
+                                <div class="sensor-info-hud">
+                                    <span class="sensor-name-hud">SURFACE TEMP</span>
+                                    <span class="sensor-type-hud">INFRARED</span>
+                                </div>
+                                <div class="sensor-status-hud" id="surface-temp-card-status">
+                                    <span class="status-badge-hud normal">NORMAL</span>
+                                </div>
+                            </div>
+                            <div class="sensor-value-hud">
+                                <span class="value-big" id="surface-temp-card-value">0.0</span>
+                                <span class="value-unit">°C</span>
+                            </div>
+                            <div class="oscilloscope" id="surface-temp-sparkline"></div>
+                        </div>
+
+                        <!-- Current Card -->
+                        <div class="card-hud sensor-card compact" data-sensor="current">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="sensor-header-hud">
+                                <div class="sensor-icon-hud current">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                                <div class="sensor-info-hud">
+                                    <span class="sensor-name-hud">CURRENT</span>
+                                    <span class="sensor-type-hud">CT SENSOR</span>
+                                </div>
+                                <div class="sensor-status-hud" id="current-card-status">
+                                    <span class="status-badge-hud normal">NORMAL</span>
+                                </div>
+                            </div>
+                            <div class="sensor-value-hud">
+                                <span class="value-big" id="current-card-value">0.0</span>
+                                <span class="value-unit">A</span>
+                            </div>
+                            <div class="oscilloscope" id="current-sparkline"></div>
+                        </div>
+
+                        <!-- Pressure Card -->
+                        <div class="card-hud sensor-card compact" data-sensor="pressure">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="sensor-header-hud">
+                                <div class="sensor-icon-hud pressure">
+                                    <i class="fas fa-gauge-high"></i>
+                                </div>
+                                <div class="sensor-info-hud">
+                                    <span class="sensor-name-hud">PRESSURE</span>
+                                    <span class="sensor-type-hud">BAROMETRIC</span>
+                                </div>
+                                <div class="sensor-status-hud" id="pressure-card-status">
+                                    <span class="status-badge-hud normal">NORMAL</span>
+                                </div>
+                            </div>
+                            <div class="sensor-value-hud">
+                                <span class="value-big" id="pressure-card-value">0.0</span>
+                                <span class="value-unit">hPa</span>
+                            </div>
+                            <div class="oscilloscope" id="pressure-sparkline"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Section -->
+                <div class="card-hud activity-card">
+                    <div class="card-corner tl"></div>
+                    <div class="card-corner tr"></div>
+                    <div class="card-corner bl"></div>
+                    <div class="card-corner br"></div>
+                    <div class="activity-header-hud">
+                        <h3>SENSOR ACTIVITY // WEEKLY OVERVIEW</h3>
+                        <div class="activity-controls-hud">
+                            <button class="ctrl-btn" id="prevWeekBtn"><i class="fas fa-chevron-left"></i></button>
+                            <span class="week-label-hud" id="weekLabel">THIS WEEK</span>
+                            <button class="ctrl-btn" id="nextWeekBtn"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                    <div class="activity-chart-hud" id="activityChart"></div>
+                    <div class="activity-legend-hud">
+                        <span class="legend-item-hud"><span class="dot normal"></span> NORMAL</span>
+                        <span class="legend-item-hud"><span class="dot warning"></span> WARNING</span>
+                        <span class="legend-item-hud"><span class="dot critical"></span> CRITICAL</span>
+                        <span class="legend-item-hud"><span class="dot inactive"></span> NO DATA</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sensors Page -->
+            <div class="page-hud" id="page-sensors">
+                <div class="toolbar-hud">
+                    <div class="device-selector-hud">
+                        <button class="device-btn active" data-device="0">
+                            <div class="device-led"></div>
+                            <span>DEVICE 1</span>
+                            <span class="device-tag">PRIMARY</span>
+                        </button>
+                        <button class="device-btn" data-device="1">
+                            <div class="device-led"></div>
+                            <span>DEVICE 2</span>
+                        </button>
+                        <button class="device-btn" data-device="2">
+                            <div class="device-led"></div>
+                            <span>DEVICE 3</span>
+                        </button>
+                    </div>
+                    <div class="view-toggle-hud">
+                        <button class="view-btn active" data-view="grid" title="Grid View">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button class="view-btn" data-view="list" title="List View">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="device-overview-hud" id="deviceOverviewRow">
+                    <div class="device-card-hud active" data-device="0">
+                        <div class="card-corner tl"></div>
+                        <div class="card-corner tr"></div>
+                        <div class="card-corner bl"></div>
+                        <div class="card-corner br"></div>
+                        <div class="device-header-hud">
+                            <div class="device-icon-hud">
+                                <i class="fas fa-microchip"></i>
+                            </div>
+                            <div class="device-info-hud">
+                                <span class="device-name-hud">AICO PANEL #1</span>
+                                <span class="device-location-hud"><i class="fas fa-map-marker-alt"></i> ANA PANO</span>
+                            </div>
+                            <div class="device-gauge-hud">
+                                <svg viewBox="0 0 40 40">
+                                    <circle class="gauge-bg" cx="20" cy="20" r="16"/>
+                                    <circle class="gauge-fg" cx="20" cy="20" r="16" data-device="0"/>
+                                </svg>
+                                <span class="gauge-text" id="device0Health">100%</span>
+                            </div>
+                        </div>
+                        <div class="device-stats-hud">
+                            <div class="dstat">
+                                <i class="fas fa-thermometer-half"></i>
+                                <span id="device0Temp">--°C</span>
+                            </div>
+                            <div class="dstat">
+                                <i class="fas fa-droplet"></i>
+                                <span id="device0Humidity">--%</span>
+                            </div>
+                            <div class="dstat">
+                                <i class="fas fa-bolt"></i>
+                                <span id="device0Current">--A</span>
+                            </div>
+                            <div class="dstat alerts">
+                                <i class="fas fa-bell"></i>
+                                <span id="device0Alerts">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="device-card-hud" data-device="1">
+                        <div class="card-corner tl"></div>
+                        <div class="card-corner tr"></div>
+                        <div class="card-corner bl"></div>
+                        <div class="card-corner br"></div>
+                        <div class="device-header-hud">
+                            <div class="device-icon-hud">
+                                <i class="fas fa-microchip"></i>
+                            </div>
+                            <div class="device-info-hud">
+                                <span class="device-name-hud">AICO PANEL #2</span>
+                                <span class="device-location-hud"><i class="fas fa-map-marker-alt"></i> YEDEK PANO</span>
+                            </div>
+                            <div class="device-gauge-hud">
+                                <svg viewBox="0 0 40 40">
+                                    <circle class="gauge-bg" cx="20" cy="20" r="16"/>
+                                    <circle class="gauge-fg" cx="20" cy="20" r="16" data-device="1"/>
+                                </svg>
+                                <span class="gauge-text" id="device1Health">100%</span>
+                            </div>
+                        </div>
+                        <div class="device-stats-hud">
+                            <div class="dstat">
+                                <i class="fas fa-thermometer-half"></i>
+                                <span id="device1Temp">--°C</span>
+                            </div>
+                            <div class="dstat">
+                                <i class="fas fa-droplet"></i>
+                                <span id="device1Humidity">--%</span>
+                            </div>
+                            <div class="dstat">
+                                <i class="fas fa-bolt"></i>
+                                <span id="device1Current">--A</span>
+                            </div>
+                            <div class="dstat alerts">
+                                <i class="fas fa-bell"></i>
+                                <span id="device1Alerts">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="device-card-hud" data-device="2">
+                        <div class="card-corner tl"></div>
+                        <div class="card-corner tr"></div>
+                        <div class="card-corner bl"></div>
+                        <div class="card-corner br"></div>
+                        <div class="device-header-hud">
+                            <div class="device-icon-hud">
+                                <i class="fas fa-microchip"></i>
+                            </div>
+                            <div class="device-info-hud">
+                                <span class="device-name-hud">AICO PANEL #3</span>
+                                <span class="device-location-hud"><i class="fas fa-map-marker-alt"></i> DIS PANO</span>
+                            </div>
+                            <div class="device-gauge-hud">
+                                <svg viewBox="0 0 40 40">
+                                    <circle class="gauge-bg" cx="20" cy="20" r="16"/>
+                                    <circle class="gauge-fg" cx="20" cy="20" r="16" data-device="2"/>
+                                </svg>
+                                <span class="gauge-text" id="device2Health">100%</span>
+                            </div>
+                        </div>
+                        <div class="device-stats-hud">
+                            <div class="dstat">
+                                <i class="fas fa-thermometer-half"></i>
+                                <span id="device2Temp">--°C</span>
+                            </div>
+                            <div class="dstat">
+                                <i class="fas fa-droplet"></i>
+                                <span id="device2Humidity">--%</span>
+                            </div>
+                            <div class="dstat">
+                                <i class="fas fa-bolt"></i>
+                                <span id="device2Current">--A</span>
+                            </div>
+                            <div class="dstat alerts">
+                                <i class="fas fa-bell"></i>
+                                <span id="device2Alerts">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sensors-grid-hud" id="allSensorsGrid"></div>
+            </div>
+
+            <!-- Analytics Page -->
+            <div class="page-hud" id="page-analytics">
+                <div class="toolbar-hud">
+                    <div class="device-selector-hud">
+                        <button class="device-btn active" data-device="all">
+                            <i class="fas fa-layer-group"></i>
+                            <span>ALL DEVICES</span>
+                        </button>
+                        <button class="device-btn" data-device="0">
+                            <div class="device-led"></div>
+                            <span>PANEL #1</span>
+                        </button>
+                        <button class="device-btn" data-device="1">
+                            <div class="device-led"></div>
+                            <span>PANEL #2</span>
+                        </button>
+                        <button class="device-btn" data-device="2">
+                            <div class="device-led"></div>
+                            <span>PANEL #3</span>
+                        </button>
+                    </div>
+                    <div class="toolbar-controls">
+                        <select id="analyticsTimeRange" class="select-hud">
+                            <option value="50">LAST 50 READINGS</option>
+                            <option value="100">LAST 100 READINGS</option>
+                            <option value="200">LAST 200 READINGS</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="analytics-grid-hud">
+                    <!-- Energy Flow Card -->
+                    <div class="card-hud energy-card">
+                        <div class="card-corner tl"></div>
+                        <div class="card-corner tr"></div>
+                        <div class="card-corner bl"></div>
+                        <div class="card-corner br"></div>
+                        <div class="card-header-hud">
+                            <h3>ENERGY FLOW // POWER DISTRIBUTION</h3>
+                            <div class="energy-total">
+                                <span class="energy-value" id="totalPower">0.0</span>
+                                <span class="energy-unit">kW</span>
+                            </div>
+                        </div>
+                        <div class="energy-flow-hud" id="energyFlowVisual">
+                            <svg class="flow-svg-hud" viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet">
+                                <defs>
+                                    <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" style="stop-color:#45a29e;stop-opacity:0"/>
+                                        <stop offset="50%" style="stop-color:#45a29e;stop-opacity:1"/>
+                                        <stop offset="100%" style="stop-color:#45a29e;stop-opacity:0"/>
+                                    </linearGradient>
+                                </defs>
+                                <g class="flow-source-hud">
+                                    <rect x="20" y="60" width="120" height="80" class="source-box-hud"/>
+                                    <text x="80" y="95" class="source-label-hud">INPUT</text>
+                                    <text x="80" y="115" class="source-value-hud" id="flowInputValue">220V</text>
+                                </g>
+                                <g class="flow-lines-hud">
+                                    <path class="flow-line-hud" d="M140,100 Q200,100 250,60" id="flowLine1"/>
+                                    <path class="flow-line-hud" d="M140,100 L250,100" id="flowLine2"/>
+                                    <path class="flow-line-hud" d="M140,100 Q200,100 250,140" id="flowLine3"/>
+                                </g>
+                                <g class="flow-node-hud" data-device="0">
+                                    <circle cx="300" cy="60" r="25" class="node-circle-hud"/>
+                                    <text x="300" y="65" class="node-label-hud">#1</text>
+                                    <text x="360" y="55" class="node-value-hud" id="flowDevice0Current">0.0A</text>
+                                    <text x="360" y="75" class="node-power-hud" id="flowDevice0Power">0W</text>
+                                </g>
+                                <g class="flow-node-hud" data-device="1">
+                                    <circle cx="300" cy="100" r="25" class="node-circle-hud"/>
+                                    <text x="300" y="105" class="node-label-hud">#2</text>
+                                    <text x="360" y="95" class="node-value-hud" id="flowDevice1Current">0.0A</text>
+                                    <text x="360" y="115" class="node-power-hud" id="flowDevice1Power">0W</text>
+                                </g>
+                                <g class="flow-node-hud" data-device="2">
+                                    <circle cx="300" cy="140" r="25" class="node-circle-hud"/>
+                                    <text x="300" y="145" class="node-label-hud">#3</text>
+                                    <text x="360" y="135" class="node-value-hud" id="flowDevice2Current">0.0A</text>
+                                    <text x="360" y="155" class="node-power-hud" id="flowDevice2Power">0W</text>
+                                </g>
+                                <g class="status-indicators-hud">
+                                    <circle cx="430" cy="60" r="6" class="status-dot-hud normal" id="status0"/>
+                                    <circle cx="430" cy="100" r="6" class="status-dot-hud normal" id="status1"/>
+                                    <circle cx="430" cy="140" r="6" class="status-dot-hud normal" id="status2"/>
+                                </g>
+                                <g class="sensor-bars-hud">
+                                    <rect x="470" y="45" width="280" height="24" class="bar-bg-hud"/>
+                                    <rect x="470" y="45" width="0" height="24" class="bar-fill-hud temp" id="tempBar0"/>
+                                    <text x="480" y="62" class="bar-label-hud">TEMP</text>
+                                    <text x="740" y="62" class="bar-value-hud" id="tempBarVal0">--°C</text>
+                                    <rect x="470" y="85" width="280" height="24" class="bar-bg-hud"/>
+                                    <rect x="470" y="85" width="0" height="24" class="bar-fill-hud humidity" id="humidityBar0"/>
+                                    <text x="480" y="102" class="bar-label-hud">HUM</text>
+                                    <text x="740" y="102" class="bar-value-hud" id="humidityBarVal0">--%</text>
+                                    <rect x="470" y="125" width="280" height="24" class="bar-bg-hud"/>
+                                    <rect x="470" y="125" width="0" height="24" class="bar-fill-hud co" id="coBar0"/>
+                                    <text x="480" y="142" class="bar-label-hud">CO</text>
+                                    <text x="740" y="142" class="bar-value-hud" id="coBarVal0">--ppm</text>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Main Chart Card -->
+                    <div class="card-hud chart-card-hud">
+                        <div class="card-corner tl"></div>
+                        <div class="card-corner tr"></div>
+                        <div class="card-corner bl"></div>
+                        <div class="card-corner br"></div>
+                        <div class="card-header-hud">
+                            <h3>SENSOR TRENDS // REAL-TIME DATA</h3>
+                            <div class="sensor-chips-hud" id="sensorChips">
+                                <button class="chip-hud active" data-sensor="temperature">
+                                    <i class="fas fa-thermometer-half"></i> TEMP
+                                </button>
+                                <button class="chip-hud" data-sensor="humidity">
+                                    <i class="fas fa-droplet"></i> HUMIDITY
+                                </button>
+                                <button class="chip-hud" data-sensor="current">
+                                    <i class="fas fa-bolt"></i> CURRENT
+                                </button>
+                                <button class="chip-hud" data-sensor="co">
+                                    <i class="fas fa-skull-crossbones"></i> CO
+                                </button>
+                            </div>
+                        </div>
+                        <div class="chart-container-hud" id="analyticsChart">
+                            <canvas id="analyticsCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gauges Section -->
+                    <div class="gauges-section-hud">
+                        <div class="card-hud gauge-card-hud">
+                            <div class="card-corner tl"></div>
+                            <div class="card-corner tr"></div>
+                            <div class="card-corner bl"></div>
+                            <div class="card-corner br"></div>
+                            <div class="gauge-header-hud">
+                                <h4>SYSTEM HEALTH</h4>
+                                <span class="gauge-status-hud" id="systemStatus">OPERATIONAL</span>
+                            </div>
+                            <div class="cockpit-gauge">
+                                <svg viewBox="0 0 200 200" class="cockpit-svg">
+                                    <defs>
+                                        <linearGradient id="cockpitGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" style="stop-color:#45a29e"/>
+                                            <stop offset="100%" style="stop-color:#66fcf1"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle class="cockpit-bg" cx="100" cy="100" r="90"/>
+                                    <circle class="cockpit-track" cx="100" cy="100" r="80"/>
+                                    <circle class="cockpit-progress" cx="100" cy="100" r="80" id="mainGaugeProgress"/>
+                                    <g class="cockpit-ticks" id="cockpitTicks"></g>
+                                    <circle class="cockpit-inner" cx="100" cy="100" r="60"/>
+                                </svg>
+                                <div class="cockpit-value">
+                                    <span class="cv-num" id="mainGaugeValue">100</span>
+                                    <span class="cv-unit">%</span>
+                                </div>
+                            </div>
+                            <div class="gauge-legend-hud">
+                                <div class="gl-item">
+                                    <span class="gl-dot normal"></span>
+                                    <span>NORMAL: <strong id="normalDevices">3</strong></span>
+                                </div>
+                                <div class="gl-item">
+                                    <span class="gl-dot warning"></span>
+                                    <span>WARNING: <strong id="warningDevices">0</strong></span>
+                                </div>
+                                <div class="gl-item">
+                                    <span class="gl-dot critical"></span>
+                                    <span>CRITICAL: <strong id="criticalDevices">0</strong></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mini-gauges-hud">
+                            <div class="card-hud mini-gauge-card temp">
+                                <div class="card-corner tl"></div>
+                                <div class="card-corner tr"></div>
+                                <div class="card-corner bl"></div>
+                                <div class="card-corner br"></div>
+                                <div class="mg-visual">
+                                    <canvas id="tempMiniGauge" width="80" height="80"></canvas>
+                                </div>
+                                <div class="mg-info">
+                                    <span class="mg-title">TEMPERATURE</span>
+                                    <span class="mg-value" id="avgTemp">--</span>
+                                    <span class="mg-range">RANGE: <span id="tempRange">-- ~ --</span></span>
+                                </div>
+                            </div>
+                            <div class="card-hud mini-gauge-card humidity">
+                                <div class="card-corner tl"></div>
+                                <div class="card-corner tr"></div>
+                                <div class="card-corner bl"></div>
+                                <div class="card-corner br"></div>
+                                <div class="mg-visual">
+                                    <canvas id="humidityMiniGauge" width="80" height="80"></canvas>
+                                </div>
+                                <div class="mg-info">
+                                    <span class="mg-title">HUMIDITY</span>
+                                    <span class="mg-value" id="avgHumidity">--</span>
+                                    <span class="mg-range">RANGE: <span id="humidityRange">-- ~ --</span></span>
+                                </div>
+                            </div>
+                            <div class="card-hud mini-gauge-card current">
+                                <div class="card-corner tl"></div>
+                                <div class="card-corner tr"></div>
+                                <div class="card-corner bl"></div>
+                                <div class="card-corner br"></div>
+                                <div class="mg-visual">
+                                    <canvas id="currentMiniGauge" width="80" height="80"></canvas>
+                                </div>
+                                <div class="mg-info">
+                                    <span class="mg-title">CURRENT</span>
+                                    <span class="mg-value" id="avgCurrent">--</span>
+                                    <span class="mg-range">TOTAL: <span id="totalCurrent">--</span></span>
+                                </div>
+                            </div>
+                            <div class="card-hud mini-gauge-card alerts">
+                                <div class="card-corner tl"></div>
+                                <div class="card-corner tr"></div>
+                                <div class="card-corner bl"></div>
+                                <div class="card-corner br"></div>
+                                <div class="mg-visual">
+                                    <div class="alert-counter">
+                                        <span id="totalAlerts">0</span>
+                                    </div>
+                                </div>
+                                <div class="mg-info">
+                                    <span class="mg-title">ALERTS TODAY</span>
+                                    <span class="mg-value" id="alertStatus">ALL CLEAR</span>
+                                    <span class="mg-range">LAST: <span id="lastAlertTime">--</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts Page -->
+            <div class="page-hud" id="page-alerts">
+                <div class="alerts-page-hud">
+                    <div class="card-hud alerts-filters-hud">
+                        <div class="card-corner tl"></div>
+                        <div class="card-corner tr"></div>
+                        <div class="card-corner bl"></div>
+                        <div class="card-corner br"></div>
+                        <button class="filter-btn-hud active" data-filter="all">ALL</button>
+                        <button class="filter-btn-hud" data-filter="critical">CRITICAL</button>
+                        <button class="filter-btn-hud" data-filter="warning">WARNING</button>
+                        <button class="clear-btn-hud" id="clearAlerts">
+                            <i class="fas fa-trash"></i> CLEAR ALL
+                        </button>
+                    </div>
+                    <div class="card-hud alerts-list-card">
+                        <div class="card-corner tl"></div>
+                        <div class="card-corner tr"></div>
+                        <div class="card-corner bl"></div>
+                        <div class="card-corner br"></div>
+                        <div class="alerts-list-hud" id="alertsListFull">
+                            <div class="no-alerts-hud">
+                                <i class="fas fa-shield-check"></i>
+                                <p>NO ALERTS AT THIS TIME</p>
+                                <span>ALL SYSTEMS OPERATIONAL</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Sensor Detail Modal -->
+    <div class="modal-hud" id="sensorDetailModal">
+        <div class="modal-backdrop-hud"></div>
+        <div class="modal-content-hud">
+            <div class="card-corner tl"></div>
+            <div class="card-corner tr"></div>
+            <div class="card-corner bl"></div>
+            <div class="card-corner br"></div>
+            <div class="modal-header-hud">
+                <div class="modal-title-hud">
+                    <div class="modal-icon-hud" id="modalSensorIcon"><i class="fas fa-thermometer-half"></i></div>
+                    <div>
+                        <h2 id="modalSensorName">TEMPERATURE</h2>
+                        <span id="modalSensorType">THERMAL SENSOR</span>
+                    </div>
+                </div>
+                <button class="modal-close-hud" id="closeDetailModal"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body-hud">
+                <div class="modal-value-hud">
+                    <span class="mv-value" id="modalSensorValue">0.0</span>
+                    <span class="mv-unit" id="modalSensorUnit">°C</span>
+                    <div class="mv-status" id="modalSensorStatus">
+                        <span class="status-badge-hud normal">NORMAL</span>
+                    </div>
+                </div>
+                <div class="modal-chart-hud">
+                    <h4>HISTORICAL DATA</h4>
+                    <canvas id="modalHistoryChart"></canvas>
+                </div>
+                <div class="modal-thresholds-hud">
+                    <div class="threshold-item-hud warning">
+                        <span class="th-label">WARNING THRESHOLD</span>
+                        <span class="th-value" id="modalWarningThreshold">--</span>
+                    </div>
+                    <div class="threshold-item-hud critical">
+                        <span class="th-label">CRITICAL THRESHOLD</span>
+                        <span class="th-value" id="modalCriticalThreshold">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container-hud" id="toastContainer"></div>
+
+    <script src="src/js/dashboard.js"></script>
+</body>
+</html>

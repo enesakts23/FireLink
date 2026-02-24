@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AICO - Yangın Algılama Sistemi</title>
+    <link rel="stylesheet" href="aicofiresystem.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- MQTT Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>
+    <!-- MQTT Client Script -->
+    <script src="mqtt.js" type="text/javascript"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="neural-network"></div>
+        
+        <header class="main-header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="logo-section">
+                        <div class="logo-icon">
+                            <i class="fas fa-fire-flame-curved"></i>
+                            <div class="logo-pulse"></div>
+                        </div>
+                        <div class="logo-text">
+                            <h1>AICO</h1>
+                            <span class="subtitle"> Fıre Detectıon System</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="header-right">
+                    <div class="view-controls">
+                        <button class="view-btn active" id="chartView" data-view="chart">
+                            <i class="fas fa-chart-area"></i>
+                            <span>Analytics</span>
+                            <div class="btn-glow"></div>
+                        </button>
+                        <button class="view-btn" id="gaugeView" data-view="gauge">
+                            <i class="fas fa-gauge-high"></i>
+                            <span>Gauges</span>
+                            <div class="btn-glow"></div>
+                        </button>
+                        <button class="view-btn" id="gridView" data-view="grid">
+                            <i class="fas fa-grid"></i>
+                            <span>Grid</span>
+                            <div class="btn-glow"></div>
+                        </button>
+                    </div>
+                    
+                    <div class="board-health">
+                        <div class="board-health-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <span class="board-health-value" id="boardHealthValue">0.00%</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-items">
+                <div class="status-item active">
+                    <div class="status-indicator"></div>
+                    <span>System Operational</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator warning"></div>
+                    <span id="alertCount">0 Active Alerts</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-indicator success"></div>
+                    <span id="sensorCount">12 Sensors Online</span>
+                </div>
+                <div class="status-item">
+                    <span class="timestamp" id="lastUpdate">--:--:--</span>
+                </div>
+            </div>
+        </div>
+
+        <main class="dashboard-main">
+            <section class="sensors-grid" id="sensorsGrid">
+                <div class="sensor-card temperature" data-sensor="temperature">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>Temperature</h3>
+                                <span class="sensor-type">Thermal Sensor</span>
+                            </div>
+                            <div class="sensor-status" id="temperature-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="temperature-value">0.0</span>
+                                <span class="unit">°C</span>
+                            </div>
+
+                        </div>
+                        
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="temperature-chart"></div>
+                            <div class="gauge-container" id="temperature-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="temperature-gauge-value">24.5</span>
+                                    <span class="gauge-unit">°C</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card humidity" data-sensor="humidity">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-droplet"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>Humidity</h3>
+                                <span class="sensor-type">Moisture Sensor</span>
+                            </div>
+                            <div class="sensor-status" id="humidity-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="humidity-value">0.0</span>
+                                <span class="unit">%</span>
+                            </div>
+
+                        </div>
+                        
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="humidity-chart"></div>
+                            <div class="gauge-container" id="humidity-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="humidity-gauge-value">45.2</span>
+                                    <span class="gauge-unit">%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card gas" data-sensor="gas">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-wind"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>Gas Resistance</h3>
+                                <span class="sensor-type">Gas Sensor</span>
+                            </div>
+                            <div class="sensor-status" id="gas-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="gas-value">0.0</span>
+                                <span class="unit">Ω</span>
+                            </div>
+                        </div>
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="gas-chart"></div>
+                            <div class="gauge-container" id="gas-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="gas-gauge-value">0.0</span>
+                                    <span class="gauge-unit">Ω</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card air-quality" data-sensor="air-quality">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-smog"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>Air Quality</h3>
+                                <span class="sensor-type">Air Sensor</span>
+                            </div>
+                            <div class="sensor-status" id="air-quality-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="air-quality-value">0.0</span>
+                                <span class="unit">AQI</span>
+                            </div>
+                        </div>
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="air-quality-chart"></div>
+                            <div class="gauge-container" id="air-quality-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="air-quality-gauge-value">0.0</span>
+                                    <span class="gauge-unit">AQI</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card surface-temp" data-sensor="surface-temp">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-temperature-high"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>Surface Temp</h3>
+                                <span class="sensor-type">Infrared Sensor</span>
+                            </div>
+                            <div class="sensor-status" id="surface-temp-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="surface-temp-value">0.0</span>
+                                <span class="unit">°C</span>
+                            </div>
+
+                        </div>
+                        
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="surface-temp-chart"></div>
+                            <div class="gauge-container" id="surface-temp-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="surface-temp-gauge-value">0.0</span>
+                                    <span class="gauge-unit">°C</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card surface-temp-2" data-sensor="surface-temp-2">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-temperature-high"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>Surface Temp-2</h3>
+                                <span class="sensor-type">Infrared Sensor</span>
+                            </div>
+                            <div class="sensor-status" id="surface-temp-2-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="surface-temp-2-value">0.0</span>
+                                <span class="unit">°C</span>
+                            </div>
+
+                        </div>
+                        
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="surface-temp-2-chart"></div>
+                            <div class="gauge-container" id="surface-temp-2-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="surface-temp-2-gauge-value">0.0</span>
+                                    <span class="gauge-unit">°C</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card tvoc" data-sensor="tvoc">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-atom"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>TVOC</h3>
+                                <span class="sensor-type">Volatile Organic</span>
+                            </div>
+                            <div class="sensor-status" id="tvoc-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="tvoc-value">0.0</span>
+                                <span class="unit">ppb</span>
+                            </div>
+
+                        </div>
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="tvoc-chart"></div>
+                            <div class="gauge-container" id="tvoc-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="tvoc-gauge-value">350</span>
+                                    <span class="gauge-unit">ppb</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card eco2" data-sensor="eco2">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>eCO2</h3>
+                                <span class="sensor-type">CO2 Equivalent</span>
+                            </div>
+                            <div class="sensor-status" id="eco2-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="eco2-value">0.0</span>
+                                <span class="unit">ppm</span>
+                            </div>
+
+                        </div>
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="eco2-chart"></div>
+                            <div class="gauge-container" id="eco2-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="eco2-gauge-value">450</span>
+                                    <span class="gauge-unit">ppm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card no2" data-sensor="no2">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-cloud"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>NO2</h3>
+                                <span class="sensor-type">Nitrogen Dioxide</span>
+                            </div>
+                            <div class="sensor-status" id="no2-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="no2-value">0.0</span>
+                                <span class="unit">ppb</span>
+                            </div>
+
+                        </div>
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="no2-chart"></div>
+                            <div class="gauge-container" id="no2-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="no2-gauge-value">20</span>
+                                    <span class="gauge-unit">ppb</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card co" data-sensor="co">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-skull-crossbones"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>CO</h3>
+                                <span class="sensor-type">Carbon Monoxide</span>
+                            </div>
+                            <div class="sensor-status" id="co-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="co-value">0.0</span>
+                                <span class="unit">ppm</span>
+                            </div>
+
+                        </div>
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="co-chart"></div>
+                            <div class="gauge-container" id="co-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="co-gauge-value">5</span>
+                                    <span class="gauge-unit">ppm</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card pressure" data-sensor="pressure">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-gauge-high"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>Pressure</h3>
+                                <span class="sensor-type">Barometric Sensor</span>
+                            </div>
+                            <div class="sensor-status" id="pressure-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="pressure-value">0.0</span>
+                                <span class="unit">hPa</span>
+                            </div>
+
+                        </div>
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="pressure-chart"></div>
+                            <div class="gauge-container" id="pressure-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="pressure-gauge-value">0.0</span>
+                                    <span class="gauge-unit">hPa</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+
+                <div class="sensor-card current" data-sensor="current">
+                    <div class="card-background"></div>
+                    <div class="card-content">
+                        <div class="sensor-header">
+                            <div class="sensor-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="sensor-info">
+                                <h3>Current</h3>
+                                <span class="sensor-type">Current Sensor</span>
+                            </div>
+                            <div class="sensor-status" id="current-status">
+                                <div class="status-badge normal">NORMAL</div>
+                            </div>
+                        </div>
+                        <div class="sensor-value-display">
+                            <div class="main-value">
+                                <span class="value" id="current-value">0.0</span>
+                                <span class="unit">A</span>
+                            </div>
+
+                        </div>
+                        <div class="sensor-visualization">
+                            <div class="chart-container" id="current-chart"></div>
+                            <div class="gauge-container" id="current-gauge" style="display: none;">
+                                <canvas width="200" height="120"></canvas>
+                                <div class="gauge-label">
+                                    <span class="gauge-value" id="current-gauge-value">0.0</span>
+                                    <span class="gauge-unit">A</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-glow"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="emergency-modal" id="emergencyModal">
+        <div class="modal-content">
+            <div class="emergency-header">
+                <div class="emergency-icon">
+                    <i class="fas fa-fire-flame-curved"></i>
+                </div>
+                <h2>FIRE ALERT PROTOCOL</h2>
+                <button class="modal-close" id="closeEmergency">&times;</button>
+            </div>
+            <div class="emergency-body">
+                <p id="emergencyMessage">Critical fire condition detected!</p>
+                <div class="emergency-actions">
+                    <button class="emergency-btn primary" id="acknowledgeBtn">
+                        <i class="fas fa-check"></i>
+                        Acknowledge
+                    </button>
+                    <button class="emergency-btn secondary" id="silenceBtn">
+                        <i class="fas fa-volume-mute"></i>
+                        Silence Alarm
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-overlay"></div>
+    </div>
+
+    <div class="scenario-modal" id="scenarioModal">
+        <div class="modal-content">
+            <div class="scenario-header">
+                <h3>Simulation Scenarios</h3>
+                <button class="modal-close" id="closeScenario">&times;</button>
+            </div>
+            <div class="scenario-body">
+                <div class="scenario-option" data-scenario="normal">
+                    <div class="scenario-icon normal">
+                        <i class="fas fa-shield-check"></i>
+                    </div>
+                    <div class="scenario-info">
+                        <h4>Normal Operation</h4>
+                        <p>All sensors within normal parameters</p>
+                    </div>
+                </div>
+                <div class="scenario-option" data-scenario="fire_simulation">
+                    <div class="scenario-icon critical">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="scenario-info">
+                        <h4>Fire Simulation</h4>
+                        <p>Elevated temperature and gas levels</p>
+                    </div>
+                </div>
+                <div class="scenario-option" data-scenario="maintenance">
+                    <div class="scenario-icon warning">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="scenario-info">
+                        <h4>Maintenance Mode</h4>
+                        <p>Reduced activity levels</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-overlay"></div>
+    </div>
+
+    <!-- Sensor Detail Modal -->
+    <div class="sensor-detail-modal" id="sensorDetailModal">
+        <div class="modal-content sensor-detail-content">
+            <div class="sensor-detail-header">
+                <div class="sensor-detail-icon">
+                    <i class="fas fa-thermometer-half" id="sensorDetailIcon"></i>
+                </div>
+                <div class="sensor-detail-title">
+                    <h3 id="sensorDetailName">Temperature</h3>
+                    <span id="sensorDetailType">Thermal Sensor</span>
+                </div>
+                <button class="modal-close" id="closeSensorDetail">&times;</button>
+            </div>
+            <div class="sensor-detail-body">
+                <div class="current-value-section">
+                    <div class="current-value-display">
+                        <span class="current-value" id="sensorDetailValue">24.5</span>
+                        <span class="current-unit" id="sensorDetailUnit">°C</span>
+                    </div>
+                    <div class="current-status" id="sensorDetailStatus">
+                        <div class="status-badge normal">NORMAL</div>
+                    </div>
+                </div>
+                <div class="historical-chart-container">
+                    <h4>Historical Data</h4>
+                    <div class="historical-chart" id="sensorDetailChart">
+                        <canvas id="historicalChart" width="800" height="300"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-overlay blur-overlay"></div>
+    </div>
+
+    <!-- Anomaly Tooltip -->
+    <div class="anomaly-tooltip" id="anomalyTooltip">
+        <div class="tooltip-header"></div>
+        <div class="tooltip-content"></div>
+    </div>
+
+    <script src="aicofiresystem.js"></script>
+</body>
+</html>
