@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Cpu, BarChart3, Bell, Settings, Flame, Plus,
   Building2, Server, Warehouse, MapPin, Check, X, ChevronLeft, ChevronRight,
-  Sun, Moon, Wifi, WifiOff,
+  Wifi, WifiOff,
 } from 'lucide-react';
 import { useSensorStore } from '../../stores/useSensorStore';
 
@@ -185,37 +185,6 @@ export function Sidebar() {
               </motion.div>
             )}
           </AnimatePresence>
-
-          {/* Theme toggle */}
-          <button
-            className={`${collapsed ? 'w-11 h-11 justify-center' : 'w-full px-3 py-2.5 justify-start'} rounded-xl flex items-center gap-3 transition-all duration-300 ${
-              isDark
-                ? 'text-primary hover:bg-primary-lighter'
-                : 'text-text-tertiary hover:text-accent hover:bg-accent-light'
-            }`}
-            onClick={toggleTheme}
-            title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          >
-            <AnimatePresence mode="wait">
-              {isDark ? (
-                <motion.div key="sun" initial={{ rotate: -90, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: 90, scale: 0 }} transition={{ duration: 0.2 }}>
-                  <Sun size={20} className="flex-shrink-0" />
-                </motion.div>
-              ) : (
-                <motion.div key="moon" initial={{ rotate: 90, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: -90, scale: 0 }} transition={{ duration: 0.2 }}>
-                  <Moon size={20} className="flex-shrink-0" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }}
-                  transition={{ duration: 0.15 }} className="text-sm font-medium">
-                  {isDark ? 'Light Mode' : 'Dark Mode'}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </button>
 
           {/* Collapse toggle */}
           <button

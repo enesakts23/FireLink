@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Cpu, BarChart3, Bell, Settings, Flame, Plus,
   Building2, Server, Warehouse, MapPin, Check, X,
-  Sun, Moon,
+
 } from 'lucide-react';
 import { useSensorStore } from '../../stores/useSensorStore';
 
@@ -22,7 +22,6 @@ export function BottomNavigation() {
   const setActiveDevice = useSensorStore((state) => state.setActiveDevice);
   const addDevice = useSensorStore((state) => state.addDevice);
   const theme = useSensorStore((state) => state.theme);
-  const toggleTheme = useSensorStore((state) => state.toggleTheme);
 
   const [showDevicePanel, setShowDevicePanel] = useState(false);
   const [showAddDevice, setShowAddDevice] = useState(false);
@@ -144,31 +143,8 @@ export function BottomNavigation() {
         })}
       </div>
 
-      {/* Bottom: Theme Toggle + Add + Avatar */}
+      {/* Bottom: Add + Avatar */}
       <div className="flex flex-col items-center gap-2 pb-5">
-        {/* Theme Toggle */}
-        <button
-          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-300 ${
-            isDark
-              ? 'text-primary hover:bg-primary-lighter glow-cyan'
-              : 'text-text-tertiary hover:text-accent hover:bg-accent-light'
-          }`}
-          onClick={toggleTheme}
-          title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-        >
-          <AnimatePresence mode="wait">
-            {isDark ? (
-              <motion.div key="sun" initial={{ rotate: -90, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: 90, scale: 0 }} transition={{ duration: 0.2 }}>
-                <Sun size={20} />
-              </motion.div>
-            ) : (
-              <motion.div key="moon" initial={{ rotate: 90, scale: 0 }} animate={{ rotate: 0, scale: 1 }} exit={{ rotate: -90, scale: 0 }} transition={{ duration: 0.2 }}>
-                <Moon size={20} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </button>
-
         <button
           className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 ${
             isDark

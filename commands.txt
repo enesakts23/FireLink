@@ -1,0 +1,47 @@
+================================================================
+  FireLink - AICO Fire Detection System
+  Kurulum & Çalıştırma Komutları
+================================================================
+
+----------------------------------------------------------------
+1. NODE.JS KURULUMU (sadece 1 kez, PC'de yoksa)
+----------------------------------------------------------------
+winget install OpenJS.NodeJS.LTS --accept-source-agreements --accept-package-agreements
+
+  >> Kurulum bittikten sonra terminali KAPAT ve yeniden aç.
+
+----------------------------------------------------------------
+2. POWERSHELL SCRIPT IZNINI VER (sadece 1 kez)
+----------------------------------------------------------------
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force
+
+----------------------------------------------------------------
+3. PYTHON BAGIMLILIKLAR (sadece 1 kez)
+----------------------------------------------------------------
+cd C:\...\FireLink
+python -m pip install -r requirements.txt
+
+----------------------------------------------------------------
+4. REACT DASHBOARD BAGIMLILIKLAR (sadece 1 kez)
+----------------------------------------------------------------
+cd C:\...\FireLink\react-dashboard
+npm install
+
+----------------------------------------------------------------
+5. PROJEYI CALISTIR (her seferinde)
+----------------------------------------------------------------
+cd C:\...\FireLink\react-dashboard
+npm run dev
+
+  >> Tarayıcıda aç: http://localhost:5173
+
+  >> Durdurmak için: Ctrl + C
+
+----------------------------------------------------------------
+NOTLAR
+----------------------------------------------------------------
+- Node.js v24.14.1 / npm 11.11.0
+- Python 3.13+ gerekli
+- MQTT broker: 213.142.151.191:9001 (otomatik bağlanır)
+- 3. ve 4. adımlar sadece ilk kurulumda yapılır
+================================================================

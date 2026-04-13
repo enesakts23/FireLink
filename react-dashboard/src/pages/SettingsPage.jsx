@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Wifi, Shield, Bell, Monitor, Thermometer, Sliders,
-  Sun, Moon, Volume2, Eye, Radio, Server,
+  Wifi, Bell, Monitor,
+  Volume2, Eye, Radio, Server,
 } from 'lucide-react';
 import { useSensorStore } from '../stores/useSensorStore';
 
@@ -55,9 +55,6 @@ function SettingSection({ title, children }) {
 }
 
 export default function SettingsPage() {
-  const theme = useSensorStore((s) => s.theme);
-  const toggleTheme = useSensorStore((s) => s.toggleTheme);
-  const isDark = theme === 'dark';
 
   const [settings, setSettings] = useState({
     mqttEnabled: true,
@@ -65,9 +62,6 @@ export default function SettingsPage() {
     mqttPort: '9001',
     mqttTopic: 'aicofire',
     autoReconnect: true,
-    tempThreshold: 60,
-    coThreshold: 50,
-    humidityThreshold: 80,
     alertSound: true,
     alertNotifications: true,
     alertEmail: false,
@@ -123,64 +117,8 @@ export default function SettingsPage() {
           </SettingRow>
         </SettingSection>
 
-        {/* Threshold Settings */}
-        <SettingSection title="Thresholds">
-          <SettingRow icon={Thermometer} label="Temperature Alert" description={`Trigger at ${settings.tempThreshold}°C`}>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min="30"
-                max="100"
-                value={settings.tempThreshold}
-                onChange={(e) => update('tempThreshold', Number(e.target.value))}
-                className="w-28 accent-primary"
-              />
-              <span className="text-sm font-mono font-semibold text-text-primary w-10 text-right">{settings.tempThreshold}°</span>
-            </div>
-          </SettingRow>
-          <SettingRow icon={Shield} label="CO Alert" description={`Trigger at ${settings.coThreshold} ppm`}>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min="10"
-                max="100"
-                value={settings.coThreshold}
-                onChange={(e) => update('coThreshold', Number(e.target.value))}
-                className="w-28 accent-primary"
-              />
-              <span className="text-sm font-mono font-semibold text-text-primary w-10 text-right">{settings.coThreshold}</span>
-            </div>
-          </SettingRow>
-          <SettingRow icon={Sliders} label="Humidity Alert" description={`Trigger at ${settings.humidityThreshold}%`}>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min="40"
-                max="100"
-                value={settings.humidityThreshold}
-                onChange={(e) => update('humidityThreshold', Number(e.target.value))}
-                className="w-28 accent-primary"
-              />
-              <span className="text-sm font-mono font-semibold text-text-primary w-10 text-right">{settings.humidityThreshold}%</span>
-            </div>
-          </SettingRow>
-        </SettingSection>
-
         {/* Display Settings */}
         <SettingSection title="Display">
-          <SettingRow icon={isDark ? Moon : Sun} label="Theme" description={isDark ? 'Void / Neon (Dark)' : 'Clean / Apple (Light)'}>
-            <button
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all border ${
-                isDark
-                  ? 'bg-primary-lighter text-primary border-primary/20 glow-cyan'
-                  : 'bg-surface text-text-primary border-border hover:border-primary/30'
-              }`}
-              onClick={toggleTheme}
-            >
-              {isDark ? <Sun size={14} /> : <Moon size={14} />}
-              {isDark ? 'Switch to Light' : 'Switch to Dark'}
-            </button>
-          </SettingRow>
           <SettingRow icon={Bell} label="Alert Sound" description="Play sound on critical alerts">
             <Toggle enabled={settings.alertSound} onChange={(v) => update('alertSound', v)} />
           </SettingRow>
