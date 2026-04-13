@@ -390,7 +390,7 @@ export function EmberParticles({ count = 40, isDark = false }) {
   });
 
   return (
-    <points ref={pointsRef}>
+    <points key={count} ref={pointsRef}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" count={count} array={particles.positions} itemSize={3} />
         <bufferAttribute attach="attributes-color" count={count} array={particles.colors} itemSize={3} />

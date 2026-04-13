@@ -421,14 +421,12 @@ function DashboardPage() {
             <div className="space-y-4">
               {tempSensor && <GaugeBar value={tempSensor.value} min={0} max={80} color="#2D7A6F" label="Temperature (°C)" unit="°C" />}
               {pressureSensor && <GaugeBar value={pressureSensor.value} min={900} max={1100} color="#6366F1" label="Pressure (Pa)" unit="Pa" />}
-              {currentSensor && (
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-[11px] text-text-secondary">Output</span>
+              <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-text-secondary">Supply Voltage</span>
                   <span className="text-sm font-bold text-accent flex items-center gap-1">
-                    {currentSensor.value.toFixed(1)} {currentSensor.unit} <Zap size={12} />
+                    5.0 V <Zap size={12} />
                   </span>
                 </div>
-              )}
             </div>
           </AccordionItem>
         </motion.div>
