@@ -110,7 +110,7 @@ export default function SceneRoot({ onSensorClick, isDark }) {
 
   return (
     <>
-      <PerspectiveCamera makeDefault position={[22, 16, 22]} fov={38} near={0.1} far={1000} />
+      <PerspectiveCamera makeDefault position={[-8, 12, 14]} fov={38} near={0.1} far={1000} />
       <CameraController />
 
       {/* Lighting */}

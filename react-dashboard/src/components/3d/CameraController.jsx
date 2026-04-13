@@ -1,4 +1,5 @@
 import { useRef, useEffect } from 'react';
+import { useFrame } from '@react-three/fiber';
 import { CameraControls } from '@react-three/drei';
 import { useSensorStore } from '../../stores/useSensorStore';
 
@@ -13,24 +14,35 @@ import { useSensorStore } from '../../stores/useSensorStore';
    ═══════════════════════════════════════════════════════════ */
 
 const DEFAULT_CAMERA = {
-  position: [22, 16, 22],
-  target: [0, 4, 0],
+  position: [-8, 12, 14],
+  target: [0, 3, 0],
 };
 
 const FOCUS_OFFSET = { x: 6, y: 4, z: 6 };
 
 export default function CameraController() {
   const controlsRef = useRef();
+  const initializedRef = useRef(false);
   const cameraTarget = useSensorStore((s) => s.cameraTarget);
   const sensors = useSensorStore((s) => s.deviceSensors[s.activeDeviceId] || {});
 
-  // Expose controls globally for external zoom triggers (e.g., SensorsPage "Locate" button)
+  // Expose controls globally for external zoom triggers
   useEffect(() => {
-    if (controlsRef.current) {
-      window.__cameraControls = controlsRef.current;
-    }
     return () => { window.__cameraControls = null; };
   }, []);
+
+  // Initialize camera on first frame (useFrame ensures CameraControls is ready)
+  useFrame(() => {
+    if (!initializedRef.current && controlsRef.current) {
+      initializedRef.current = true;
+      window.__cameraControls = controlsRef.current;
+      controlsRef.current.setLookAt(
+        ...DEFAULT_CAMERA.position,
+        ...DEFAULT_CAMERA.target,
+        false
+      );
+    }
+  });
 
   // Zoom to sensor when cameraTarget changes
   useEffect(() => {
@@ -45,13 +57,6 @@ export default function CameraController() {
         pos.z + FOCUS_OFFSET.z,
         pos.x, pos.y, pos.z,
         true // animate
-      );
-    } else if (!cameraTarget) {
-      // Reset to default overview
-      controlsRef.current.setLookAt(
-        ...DEFAULT_CAMERA.position,
-        ...DEFAULT_CAMERA.target,
-        true
       );
     }
   }, [cameraTarget, sensors]);
