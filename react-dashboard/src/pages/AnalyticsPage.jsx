@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Area, AreaChart, Legend,
 } from 'recharts';
 import { BarChart3, TrendingUp, Activity, Flame } from 'lucide-react';
@@ -52,25 +52,44 @@ export default function AnalyticsPage() {
     }));
   }, [sensors.temperature?.history, sensors.eco2?.history]);
 
-  // Weekly alert frequency (simulated from history patterns)
-  const alertData = useMemo(() => {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const co = sensors.co?.history || [];
-    return days.map((day, i) => ({
-      day,
-      alerts: Math.max(0, Math.round((co[i * 3] || 0) / 10)),
-      warnings: Math.max(0, Math.round((co[i * 2] || 0) / 15)),
+  // TVOC vs Gas Resistance correlation data from history
+  const tvocGasData = useMemo(() => {
+    const tvoc = sensors.tvoc?.history || [];
+    const gas = sensors.gas?.history || [];
+    const len = Math.min(tvoc.length, gas.length, 20);
+    if (len < 2) return [];
+    return Array.from({ length: len }, (_, i) => ({
+      time: `${i + 1}`,
+      tvoc: tvoc[tvoc.length - len + i],
+      gas: (gas[gas.length - len + i] || 0) / 10,
     }));
-  }, [sensors.co?.history]);
+  }, [sensors.tvoc?.history, sensors.gas?.history]);
 
-  // Sensor performance data
-  const performanceData = useMemo(() => {
-    return Object.values(sensors).slice(0, 6).map((s) => ({
-      name: s.label?.split(' ')[0] || s.id,
-      uptime: 85 + Math.random() * 15,
-      readings: s.history?.length || 0,
+  // Temperature vs Humidity correlation data
+  const tempHumidData = useMemo(() => {
+    const temp = sensors.temperature?.history || [];
+    const humid = sensors.humidity?.history || [];
+    const len = Math.min(temp.length, humid.length, 20);
+    if (len < 2) return [];
+    return Array.from({ length: len }, (_, i) => ({
+      time: `${i + 1}`,
+      temperature: temp[temp.length - len + i],
+      humidity: humid[humid.length - len + i],
     }));
-  }, [sensors]);
+  }, [sensors.temperature?.history, sensors.humidity?.history]);
+
+  // TVOC vs Air Quality correlation data
+  const tvocAirData = useMemo(() => {
+    const tvoc = sensors.tvoc?.history || [];
+    const air = sensors['air-quality']?.history || [];
+    const len = Math.min(tvoc.length, air.length, 20);
+    if (len < 2) return [];
+    return Array.from({ length: len }, (_, i) => ({
+      time: `${i + 1}`,
+      tvoc: tvoc[tvoc.length - len + i],
+      airQuality: air[air.length - len + i],
+    }));
+  }, [sensors.tvoc?.history, sensors['air-quality']?.history]);
 
   return (
     <motion.div className="h-full p-6 overflow-auto" initial="hidden" animate="visible" exit={{ opacity: 0 }} variants={stagger.container}>
@@ -150,49 +169,126 @@ export default function AnalyticsPage() {
             </div>
           </motion.div>
 
-          {/* Weekly Alert Frequency */}
+          {/* TVOC vs Gas Resistance */}
           <motion.div className="col-span-5" variants={stagger.item}>
             <div className={`bg-card-bg border border-border rounded-[20px] p-5 shadow-sm ${isDark ? 'glow-card' : ''}`}>
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h3 className="font-display font-bold text-lg text-text-primary">Weekly Alert Frequency</h3>
-                  <p className="text-xs text-text-tertiary mt-0.5">Alerts & warnings by day</p>
+                  <h3 className="font-display font-bold text-lg text-text-primary">TVOC vs Gas Resistance</h3>
+                  <p className="text-xs text-text-tertiary mt-0.5">Air quality correlation over time</p>
                 </div>
               </div>
               <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={alertData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                    <XAxis dataKey="day" tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} />
-                    <YAxis tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} />
-                    <Tooltip content={<CustomTooltip />} />
-                    <Legend wrapperStyle={{ fontSize: 12, color: textColor }} />
-                    <Bar dataKey="alerts" name="Alerts" fill={isDark ? '#FF4757' : '#DC2626'} radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="warnings" name="Warnings" fill={isDark ? '#FFB800' : '#D97706'} radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {tvocGasData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={tvocGasData}>
+                      <defs>
+                        <linearGradient id="tvocGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="gasGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#16A34A" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#16A34A" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                      <XAxis dataKey="time" tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} />
+                      <YAxis tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 12, color: textColor }} />
+                      <Area type="monotone" dataKey="tvoc" name="TVOC (ppb)" stroke="#8B5CF6" fill="url(#tvocGrad)" strokeWidth={2} dot={false} />
+                      <Area type="monotone" dataKey="gas" name="Gas Res (x10)" stroke="#16A34A" fill="url(#gasGrad)" strokeWidth={2} dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-text-tertiary text-sm">Collecting data...</div>
+                )}
               </div>
             </div>
           </motion.div>
         </div>
 
-        {/* Sensor Performance */}
-        <motion.div variants={stagger.item}>
-          <div className={`bg-card-bg border border-border rounded-[20px] p-5 shadow-sm ${isDark ? 'glow-card' : ''}`}>
-            <h3 className="font-display font-bold text-lg text-text-primary mb-5">Sensor Performance</h3>
-            <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={performanceData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
-                  <XAxis type="number" domain={[0, 100]} tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} />
-                  <YAxis dataKey="name" type="category" tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} width={80} />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="uptime" name="Uptime %" fill={primaryColor} radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
+        {/* Temperature vs Humidity + TVOC vs Air Quality */}
+        <div className="grid grid-cols-12 gap-5">
+          {/* Temperature vs Humidity */}
+          <motion.div className="col-span-6" variants={stagger.item}>
+            <div className={`bg-card-bg border border-border rounded-[20px] p-5 shadow-sm ${isDark ? 'glow-card' : ''}`}>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="font-display font-bold text-lg text-text-primary">Temperature vs Humidity</h3>
+                  <p className="text-xs text-text-tertiary mt-0.5">Heat & moisture correlation over time</p>
+                </div>
+              </div>
+              <div className="h-[280px]">
+                {tempHumidData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={tempHumidData}>
+                      <defs>
+                        <linearGradient id="tempHumidGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor={primaryColor} stopOpacity={0.15} />
+                          <stop offset="95%" stopColor={primaryColor} stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="humidGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#3B82F6" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                      <XAxis dataKey="time" tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} />
+                      <YAxis tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 12, color: textColor }} />
+                      <Area type="monotone" dataKey="temperature" name="Temp (°C)" stroke={primaryColor} fill="url(#tempHumidGrad)" strokeWidth={2} dot={false} />
+                      <Area type="monotone" dataKey="humidity" name="Humidity (%)" stroke="#3B82F6" fill="url(#humidGrad)" strokeWidth={2} dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-text-tertiary text-sm">Collecting data...</div>
+                )}
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+
+          {/* TVOC vs Air Quality */}
+          <motion.div className="col-span-6" variants={stagger.item}>
+            <div className={`bg-card-bg border border-border rounded-[20px] p-5 shadow-sm ${isDark ? 'glow-card' : ''}`}>
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h3 className="font-display font-bold text-lg text-text-primary">TVOC vs Air Quality</h3>
+                  <p className="text-xs text-text-tertiary mt-0.5">Volatile compounds & IAQ correlation</p>
+                </div>
+              </div>
+              <div className="h-[280px]">
+                {tvocAirData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={tvocAirData}>
+                      <defs>
+                        <linearGradient id="tvocAirGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="airQualGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#F59E0B" stopOpacity={0.15} />
+                          <stop offset="95%" stopColor="#F59E0B" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+                      <XAxis dataKey="time" tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} />
+                      <YAxis tick={{ fill: textColor, fontSize: 11 }} axisLine={{ stroke: gridColor }} tickLine={false} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Legend wrapperStyle={{ fontSize: 12, color: textColor }} />
+                      <Area type="monotone" dataKey="tvoc" name="TVOC (ppb)" stroke="#8B5CF6" fill="url(#tvocAirGrad)" strokeWidth={2} dot={false} />
+                      <Area type="monotone" dataKey="airQuality" name="Air Quality (IAQ)" stroke="#F59E0B" fill="url(#airQualGrad)" strokeWidth={2} dot={false} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-text-tertiary text-sm">Collecting data...</div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </motion.div>
   );
