@@ -18,7 +18,7 @@ import {
   Activity, Shield, Flame, Zap, Thermometer, Wind, MapPin,
   ChevronRight, ChevronDown, ArrowUpRight, Droplets, Clock,
   Building2, Skull, AlertTriangle, Gauge, Leaf, Cloud,
-  Maximize2, Code2, Eye, TrendingUp, X,
+  TrendingUp, X,
 } from 'lucide-react';
 
 import './index.css';
@@ -199,7 +199,7 @@ function GaugeBar({ value, min, max, color = '#2D7A6F', label, unit }) {
 /* ═══════════════════════ Status Toggle Row ═══════════════════════ */
 function StatusRow({ label, active, color = '#16A34A' }) {
   return (
-    <div className="flex items-center justify-between py-2">
+    <div className="flex items-center justify-between py-1">
       <span className={`text-xs font-medium ${active ? 'text-text-primary' : 'text-text-tertiary'}`}>{label}</span>
       <div className={`w-8 h-4.5 rounded-full relative transition-colors ${active ? '' : 'bg-border'}`}
         style={active ? { backgroundColor: color } : {}}>
@@ -214,7 +214,7 @@ function AccordionItem({ label, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border-t border-border">
-      <button className="w-full flex items-center justify-between py-3 px-1 text-left" onClick={() => setOpen(!open)}>
+      <button className="w-full flex items-center justify-between py-1.5 px-1 text-left" onClick={() => setOpen(!open)}>
         <span className="text-xs font-bold text-text-primary tracking-wide uppercase">{label}</span>
         <ChevronDown size={14} className={`text-text-tertiary transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
@@ -368,7 +368,7 @@ function DashboardPage() {
 
       {/* LEFT PANEL COLUMN */}
       <motion.div
-        className="absolute left-5 top-20 bottom-[220px] w-[260px] z-hud flex flex-col gap-3 overflow-hidden"
+        className="absolute left-5 top-20 bottom-[260px] w-[260px] z-hud flex flex-col gap-3 overflow-hidden"
         initial="hidden" animate="visible" variants={stagger.container}
       >
         <motion.div className="glass rounded-2xl p-4" variants={stagger.slideLeft}>
@@ -391,11 +391,11 @@ function DashboardPage() {
           </div>
         </motion.div>
 
-        <motion.div className="glass rounded-2xl p-4 flex-1 overflow-auto" variants={stagger.slideLeft}>
-          <div className="flex items-center justify-between mb-2">
+        <motion.div className="glass rounded-2xl p-2.5 flex-1 overflow-auto" variants={stagger.slideLeft}>
+          <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-bold text-text-primary tracking-wide uppercase">Status</span>
           </div>
-          <div className="space-y-0.5">
+          <div className="space-y-0">
             <StatusRow label="Fire Detection" active={true} color="#16A34A" />
             <StatusRow label="Gas Monitor" active={gasSensor?.status !== 'critical'} color={gasSensor?.status === 'critical' ? '#DC2626' : '#16A34A'} />
             <StatusRow label="Power Supply" active={true} color="#16A34A" />
@@ -407,7 +407,7 @@ function DashboardPage() {
 
       {/* RIGHT PANEL COLUMN */}
       <motion.div
-        className="absolute right-5 top-20 bottom-[220px] w-[260px] z-hud flex flex-col gap-3 overflow-hidden"
+        className="absolute right-5 top-20 bottom-[260px] w-[260px] z-hud flex flex-col gap-3 overflow-hidden"
         initial="hidden" animate="visible" variants={stagger.container}
       >
         <motion.div className="flex items-center gap-2" variants={stagger.slideRight}>
@@ -454,25 +454,6 @@ function DashboardPage() {
             )}
           </AccordionItem>
         </motion.div>
-      </motion.div>
-
-      {/* BOTTOM-LEFT CORNER UTILS */}
-      <motion.div className="absolute left-5 bottom-[226px] z-hud flex items-center gap-2"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
-        <button className="w-9 h-9 glass rounded-xl flex items-center justify-center text-text-tertiary hover:text-primary transition-colors">
-          <Code2 size={16} />
-        </button>
-        <button className="w-9 h-9 glass rounded-xl flex items-center justify-center text-text-tertiary hover:text-primary transition-colors">
-          <Maximize2 size={16} />
-        </button>
-      </motion.div>
-
-      {/* BOTTOM-RIGHT CORNER UTILS */}
-      <motion.div className="absolute right-5 bottom-[226px] z-hud"
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
-        <button className="w-9 h-9 glass rounded-xl flex items-center justify-center text-text-tertiary hover:text-primary transition-colors">
-          <Eye size={16} />
-        </button>
       </motion.div>
 
       {/* BOTTOM ROW: 3 DATA CARDS */}
@@ -538,9 +519,9 @@ function DashboardPage() {
                 </div>
                 <div className="w-px h-6 bg-border" />
                 <div className="text-center flex-1">
-                  <p className="text-[10px] text-text-tertiary mb-0.5">Temperature</p>
-                  <p className="text-xs font-bold flex items-center justify-center gap-1" style={{ color: tempSensor.status === 'critical' ? '#DC2626' : '#2D7A6F' }}>
-                    <AlertTriangle size={10} /> {tempSensor.value.toFixed(1)} °C
+                  <p className="text-[10px] text-text-tertiary mb-0.5">TVOC</p>
+                  <p className="text-xs font-bold flex items-center justify-center gap-1" style={{ color: tempSensor.status === 'critical' ? '#DC2626' : '#8B5CF6' }}>
+                    <AlertTriangle size={10} /> {sensors.tvoc?.value?.toFixed(0) ?? '—'} ppb
                   </p>
                 </div>
               </div>
