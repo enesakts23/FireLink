@@ -5,6 +5,15 @@ import * as THREE from 'three';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { useSensorStore } from '../../../stores/useSensorStore';
 
+// FBXLoader emits a harmless "unknown material type" warning for custom FBX
+// material slots — materials are fully replaced via traverse anyway.
+// Suppress specifically at module level so no React lifecycle timing issues.
+const _origWarn = console.warn.bind(console);
+console.warn = (...args) => {
+  if (typeof args[0] === 'string' && args[0].includes('unknown material type')) return;
+  _origWarn(...args);
+};
+
 /* ═══════════════════════════════════════════════════════════
    FireCardModel – Loads FBX fire detection panel with fallback
 
