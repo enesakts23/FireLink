@@ -4,7 +4,7 @@ class MQTTClient {
         this.isConnected = false;
         this.brokerHost = '213.142.151.191';
         this.brokerPort = 9001;
-        this.topic = 'aicofire';
+        this.topic = 'aicotest';
         this.clientId = 'aicofire_web_' + Math.random().toString(16).substr(2, 8);
         this.init();
     }

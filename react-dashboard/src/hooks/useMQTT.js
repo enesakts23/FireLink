@@ -5,7 +5,7 @@ import { useSensorStore } from '../stores/useSensorStore';
 const MQTT_CONFIG = {
   host: '213.142.151.191',
   port: 9001,
-  topic: 'aicofire',
+  topic: 'aicotest',
   clientId: `aico-react-${Math.random().toString(16).substring(2, 10)}`,
   reconnectDelay: 3000,
   maxReconnectAttempts: 10,
@@ -13,6 +13,12 @@ const MQTT_CONFIG = {
 
 const WARNING1_SENSORS = ['temperature', 'humidity', 'gas', 'air-quality', 'no2', 'co', 'tvoc', 'eco2'];
 const WARNING2_SENSORS = ['surface-temp', 'surface-temp-2', 'pressure', 'current'];
+
+// Map sensor numbers to device IDs
+const SENSOR_TO_DEVICE_MAP = {
+  102: 'device-2', // Warehouse A
+  // Add more mappings as needed
+};
 
 function hexToByte(hexString) {
   if (!hexString || hexString.length < 2) return 0;
@@ -40,32 +46,38 @@ function parseWarning2(warningHex) {
 function parseFireSensorData(message) {
   try {
     const parts = message.split(';');
-    if (parts.length < 17 || parts[0] !== 'A' || parts[parts.length - 1] !== 'B') return null;
+    if (parts.length < 18 || parts[0] !== 'A' || parts[parts.length - 1] !== 'B') return null;
+
+    // Parse sensor number and map to device
+    const sensorNumber = parseInt(parts[1]) || 0;
+    const deviceId = SENSOR_TO_DEVICE_MAP[sensorNumber] || 'device-2'; // Default to Warehouse A
 
     const sensorData = {
-      temperature: parseFloat(parts[1]) || 0,
-      humidity: parseFloat(parts[2]) || 0,
-      gas: parseFloat(parts[3]) || 0,
-      'air-quality': parseFloat(parts[4]) || 0,
-      no2: parseFloat(parts[5]) || 0,
-      co: parseFloat(parts[6]) || 0,
-      tvoc: parseFloat(parts[7]) || 0,
-      eco2: parseFloat(parts[8]) || 0,
-      'surface-temp': parseFloat(parts[9]) || 0,
-      'surface-temp-2': parseFloat(parts[10]) || 0,
-      pressure: parseFloat(parts[11]) || 0,
-      current: parseFloat(parts[12]) || 0,
+      temperature: parseFloat(parts[2]) || 0,
+      humidity: parseFloat(parts[3]) || 0,
+      gas: parseFloat(parts[4]) || 0,
+      'air-quality': parseFloat(parts[5]) || 0,
+      no2: parseFloat(parts[6]) || 0,
+      co: parseFloat(parts[7]) || 0,
+      tvoc: parseFloat(parts[8]) || 0,
+      eco2: parseFloat(parts[9]) || 0,
+      'surface-temp': parseFloat(parts[10]) || 0,
+      'surface-temp-2': parseFloat(parts[11]) || 0,
+      pressure: parseFloat(parts[12]) || 0,
+      current: parseFloat(parts[13]) || 0,
     };
 
     const anomalySensorIds = [
-      ...parseWarning1(parts[14]),
-      ...parseWarning2(parts[13]),
+      ...parseWarning1(parts[15]),
+      ...parseWarning2(parts[14]),
     ];
 
     return {
       sensorData,
       anomalySensorIds,
-      panelHealth: parseFloat(parts[15]) || 100,
+      panelHealth: parseFloat(parts[16]) || 100,
+      deviceId,
+      sensorNumber,
       timestamp: Date.now(),
     };
   } catch (error) {
@@ -98,8 +110,9 @@ export function useMQTT() {
     client.onMessageArrived = (message) => {
       const parsed = parseFireSensorData(message.payloadString);
       if (parsed) {
-        updateBulkSensors(parsed.sensorData, parsed.anomalySensorIds);
-        setPanelHealth(parsed.panelHealth);
+        console.log('[MQTT] Data received for device:', parsed.deviceId, 'sensor:', parsed.sensorNumber);
+        updateBulkSensors(parsed.sensorData, parsed.anomalySensorIds, parsed.deviceId);
+        setPanelHealth(parsed.panelHealth, parsed.deviceId);
       }
     };
 

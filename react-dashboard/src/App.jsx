@@ -6,7 +6,7 @@ import { Sidebar, MiniStatusBar } from './components/hud/Sidebar';
 import { Vignette, AlertBanner } from './components/hud/Vignette';
 import GlassPanel from './components/ui/GlassPanel';
 
-import { useMQTTSimulator } from './hooks/useMQTT';
+import useMQTT from './hooks/useMQTT';
 import { useSensorStore, SENSOR_CONFIG } from './stores/useSensorStore';
 
 import SensorsPage from './pages/SensorsPage';
@@ -571,7 +571,7 @@ export default function App() {
   const activePage = useSensorStore((s) => s.activePage);
   const theme = useSensorStore((s) => s.theme);
   const sidebarCollapsed = useSensorStore((s) => s.sidebarCollapsed);
-  useMQTTSimulator();
+  useMQTT();
 
   // Ensure theme class is synced on mount
   useEffect(() => {
