@@ -95,8 +95,8 @@ class MQTTClient {
                 eco2: parseFloat(parts[9]),
                 'surface-temp': parseFloat(parts[10]),
                 'surface-temp-2': parseFloat(parts[11]),
-                pressure: parseFloat(parts[12]),
-                current: parseFloat(parts[13]),
+                pressure: parseFloat(parts[12]),  // Already in atm
+                current: parseFloat(parts[13]) / 1000,  // Convert mA to A
                 panelHealth: parseFloat(parts[16])
             };
 

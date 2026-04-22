@@ -858,16 +858,16 @@ class ModernFireDashboard {
         return {
             'temperature': { value: 0, unit: '°C', min: -20, max: 80, history: [], status: 'normal', trend: 'stable', label: 'Temperature' },
             'humidity': { value: 0, unit: '%', min: 0, max: 100, history: [], status: 'normal', trend: 'stable', label: 'Humidity' },
-            'gas': { value: 0, unit: 'kOhm', min: 0, max: 500, history: [], status: 'normal', trend: 'stable', label: 'Gas Resistance' },
-            'air-quality': { value: 0, unit: 'IAQ', min: 0, max: 500, history: [], status: 'normal', trend: 'stable', label: 'Air Quality' },
-            'no2': { value: 0, unit: 'ppm', min: 0, max: 10, history: [], status: 'normal', trend: 'stable', label: 'NO2' },
-            'co': { value: 0, unit: 'ppm', min: 0, max: 100, history: [], status: 'normal', trend: 'stable', label: 'CO' },
+            'gas': { value: 0, unit: 'Ohm', min: 0, max: 500000, history: [], status: 'normal', trend: 'stable', label: 'Gas Resistance' },
+            'air-quality': { value: 0, unit: 'IAQ', min: 0, max: 100, history: [], status: 'normal', trend: 'stable', label: 'Air Quality' },
+            'no2': { value: 0, unit: 'ppm', min: 0, max: 10000, history: [], status: 'normal', trend: 'stable', label: 'NO2' },
+            'co': { value: 0, unit: 'ppm', min: 0, max: 10000, history: [], status: 'normal', trend: 'stable', label: 'CO' },
             'tvoc': { value: 0, unit: 'ppb', min: 0, max: 1000, history: [], status: 'normal', trend: 'stable', label: 'TVOC' },
-            'eco2': { value: 0, unit: 'ppm', min: 400, max: 5000, history: [], status: 'normal', trend: 'stable', label: 'eCO2' },
+            'eco2': { value: 0, unit: 'ppm', min: 0, max: 1000, history: [], status: 'normal', trend: 'stable', label: 'eCO2' },
             'surface-temp': { value: 0, unit: '°C', min: -20, max: 150, history: [], status: 'normal', trend: 'stable', label: 'Surface Temp 1' },
             'surface-temp-2': { value: 0, unit: '°C', min: -20, max: 150, history: [], status: 'normal', trend: 'stable', label: 'Surface Temp 2' },
-            'pressure': { value: 0, unit: 'hPa', min: 900, max: 1100, history: [], status: 'normal', trend: 'stable', label: 'Pressure' },
-            'current': { value: 0, unit: 'mA', min: 0, max: 1000, history: [], status: 'normal', trend: 'stable', label: 'Current' }
+            'pressure': { value: 0, unit: 'atm', min: 0.5, max: 1.5, history: [], status: 'normal', trend: 'stable', label: 'Pressure' },
+            'current': { value: 0, unit: 'A', min: 0, max: 2000, history: [], status: 'normal', trend: 'stable', label: 'Current' }
         };
     }
 
@@ -928,16 +928,16 @@ class ModernFireDashboard {
         const chartConfigs = {
             'temperature': { color: '#e63946', glowColor: '#ff6b6b', min: -20, max: 80, unit: '°C' },
             'humidity': { color: '#45a29e', glowColor: '#66fcf1', min: 0, max: 100, unit: '%' },
-            'gas': { color: '#ff9f1c', glowColor: '#ffbe0b', min: 0, max: 500, unit: 'kOhm' },
-            'air-quality': { color: '#8338ec', glowColor: '#b185db', min: 0, max: 500, unit: 'IAQ' },
-            'no2': { color: '#3a86ff', glowColor: '#72a8ff', min: 0, max: 10, unit: 'ppm' },
-            'co': { color: '#ff006e', glowColor: '#ff5c9e', min: 0, max: 100, unit: 'ppm' },
+            'gas': { color: '#ff9f1c', glowColor: '#ffbe0b', min: 0, max: 500000, unit: 'Ohm' },
+            'air-quality': { color: '#8338ec', glowColor: '#b185db', min: 0, max: 100, unit: 'IAQ' },
+            'no2': { color: '#3a86ff', glowColor: '#72a8ff', min: 0, max: 10000, unit: 'ppm' },
+            'co': { color: '#ff006e', glowColor: '#ff5c9e', min: 0, max: 10000, unit: 'ppm' },
             'tvoc': { color: '#fb5607', glowColor: '#ff8a4c', min: 0, max: 1000, unit: 'ppb' },
-            'eco2': { color: '#8ac926', glowColor: '#b3e048', min: 400, max: 5000, unit: 'ppm' },
+            'eco2': { color: '#8ac926', glowColor: '#b3e048', min: 0, max: 1000, unit: 'ppm' },
             'surface-temp': { color: '#e63946', glowColor: '#ff6b6b', min: -20, max: 150, unit: '°C' },
             'surface-temp-2': { color: '#f77f00', glowColor: '#ffa94d', min: -20, max: 150, unit: '°C' },
-            'pressure': { color: '#4361ee', glowColor: '#738eff', min: 900, max: 1100, unit: 'hPa' },
-            'current': { color: '#7209b7', glowColor: '#9d4edd', min: 0, max: 1000, unit: 'mA' }
+            'pressure': { color: '#4361ee', glowColor: '#738eff', min: 0.5, max: 1.5, unit: 'atm' },
+            'current': { color: '#7209b7', glowColor: '#9d4edd', min: 0, max: 2000, unit: 'A' }
         };
 
         Object.entries(chartConfigs).forEach(([sensorId, config]) => {

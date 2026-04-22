@@ -5,16 +5,16 @@ import { subscribeWithSelector } from 'zustand/middleware';
 const SENSOR_CONFIG = {
   temperature: { unit: '°C', min: -20, max: 80, label: 'Temperature', icon: 'Thermometer', color: '#2D7A6F' },
   humidity: { unit: '%', min: 0, max: 100, label: 'Humidity', icon: 'Droplets', color: '#3A9E8F' },
-  gas: { unit: 'kOhm', min: 0, max: 500, label: 'Gas Resistance', icon: 'Wind', color: '#6366F1' },
-  'air-quality': { unit: 'IAQ', min: 0, max: 500, label: 'Air Quality', icon: 'Activity', color: '#8B5CF6' },
-  no2: { unit: 'ppm', min: 0, max: 10, label: 'NO₂', icon: 'AlertTriangle', color: '#D97706' },
-  co: { unit: 'ppm', min: 0, max: 100, label: 'CO', icon: 'Skull', color: '#DC2626' },
+  gas: { unit: 'Ohm', min: 0, max: 500000, label: 'Gas Resistance', icon: 'Wind', color: '#6366F1' },
+  'air-quality': { unit: 'IAQ', min: 0, max: 100, label: 'Air Quality', icon: 'Activity', color: '#8B5CF6' },
+  no2: { unit: 'ppm', min: 0, max: 10000, label: 'NO₂', icon: 'AlertTriangle', color: '#D97706' },
+  co: { unit: 'ppm', min: 0, max: 10000, label: 'CO', icon: 'Skull', color: '#DC2626' },
   tvoc: { unit: 'ppb', min: 0, max: 1000, label: 'TVOC', icon: 'Cloud', color: '#0891B2' },
-  eco2: { unit: 'ppm', min: 400, max: 5000, label: 'eCO₂', icon: 'Leaf', color: '#16A34A' },
+  eco2: { unit: 'ppm', min: 0, max: 1000, label: 'eCO₂', icon: 'Leaf', color: '#16A34A' },
   'surface-temp': { unit: '°C', min: -20, max: 150, label: 'Surface Temp 1', icon: 'Flame', color: '#E8731A' },
   'surface-temp-2': { unit: '°C', min: -20, max: 150, label: 'Surface Temp 2', icon: 'Flame', color: '#F97316' },
-  pressure: { unit: 'hPa', min: 900, max: 1100, label: 'Pressure', icon: 'Gauge', color: '#6366F1' },
-  current: { unit: 'mA', min: 0, max: 1000, label: 'Current', icon: 'Zap', color: '#EAB308' },
+  pressure: { unit: 'atm', min: 0.5, max: 1.5, label: 'Pressure', icon: 'Gauge', color: '#6366F1' },
+  current: { unit: 'A', min: 0, max: 2000, label: 'Current', icon: 'Zap', color: '#EAB308' },
 };
 
 const SENSOR_POSITIONS = {

@@ -63,8 +63,8 @@ function parseFireSensorData(message) {
       eco2: parseFloat(parts[9]) || 0,
       'surface-temp': parseFloat(parts[10]) || 0,
       'surface-temp-2': parseFloat(parts[11]) || 0,
-      pressure: parseFloat(parts[12]) || 0,
-      current: parseFloat(parts[13]) || 0,
+      pressure: parseFloat(parts[12]) || 0,  // Already in atm
+      current: (parseFloat(parts[13]) || 0) / 1000,  // Convert mA to A
     };
 
     let anomalySensorIds = [
