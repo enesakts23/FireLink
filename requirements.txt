@@ -1,9 +1,4 @@
-certifi==2025.8.3
-charset-normalizer==3.4.3
-idna==3.10
-mysql-connector-python==9.4.0
 paho-mqtt==1.6.1
-requests==2.32.5
-urllib3==2.5.0
 
 #python3.13.4
+# SQLite3 is built-in with Python, no additional package needed
