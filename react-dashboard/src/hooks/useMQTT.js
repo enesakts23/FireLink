@@ -67,10 +67,22 @@ function parseFireSensorData(message) {
       current: parseFloat(parts[13]) || 0,
     };
 
-    const anomalySensorIds = [
-      ...parseWarning1(parts[15]),
-      ...parseWarning2(parts[14]),
+    let anomalySensorIds = [
+      ...parseWarning1(parts[14]),  // warning1: 8-bit for first 8 sensors
+      ...parseWarning2(parts[15]),  // warning2: 8-bit for surface temps, pressure, current
     ];
+
+    // Filter out sensors with value 0 (sensor not connected or not working)
+    // Also filter out pressure if value is 1.0 (no actual pressure reading)
+    anomalySensorIds = anomalySensorIds.filter(id => {
+      if (sensorData[id] === 0 || sensorData[id] === undefined) {
+        return false;
+      }
+      if (id === 'pressure' && sensorData[id] === 1.0) {
+        return false;
+      }
+      return true;
+    });
 
     return {
       sensorData,

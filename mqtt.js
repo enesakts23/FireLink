@@ -85,36 +85,55 @@ class MQTTClient {
 
             // Map the data to corresponding sensor values
             const sensorData = {
-                temperature: parseFloat(parts[1]),
-                humidity: parseFloat(parts[2]),
-                gas: parseFloat(parts[3]),
-                'air-quality': parseFloat(parts[4]),
-                no2: parseFloat(parts[5]),
-                co: parseFloat(parts[6]),
-                tvoc: parseFloat(parts[7]),
-                eco2: parseFloat(parts[8]),
-                'surface-temp': parseFloat(parts[9]),
-                'surface-temp-2': parseFloat(parts[10]),
-                pressure: parseFloat(parts[11]),
-                current: parseFloat(parts[12]),
-                warning2: parseInt(parts[13], 10),
-                warning1: parseInt(parts[14], 10),
-                panelHealth: parseFloat(parts[15])
+                temperature: parseFloat(parts[2]),
+                humidity: parseFloat(parts[3]),
+                gas: parseFloat(parts[4]),
+                'air-quality': parseFloat(parts[5]),
+                no2: parseFloat(parts[6]),
+                co: parseFloat(parts[7]),
+                tvoc: parseFloat(parts[8]),
+                eco2: parseFloat(parts[9]),
+                'surface-temp': parseFloat(parts[10]),
+                'surface-temp-2': parseFloat(parts[11]),
+                pressure: parseFloat(parts[12]),
+                current: parseFloat(parts[13]),
+                panelHealth: parseFloat(parts[16])
             };
 
-            // Update the dashboard with the parsed data
-            this.updateDashboardSensors(sensorData);
+            // Parse warning bytes (bit flags)
+            const warning1 = parseInt(parts[14], 10);
+            const warning2 = parseInt(parts[15], 10);
+
+            // Get anomaly sensor IDs from both warning bytes
+            const anomalySensorIds1 = this.parseAnomalyWarnings(warning1);
+            const anomalySensorIds2 = this.parseAnomalyWarningsForWarning2(warning2);
+            let anomalySensorIds = [...anomalySensorIds1, ...anomalySensorIds2];
+
+            // Filter out sensors with value 0 (sensor not connected or not working)
+            // Also filter out pressure if value is 1.0 (no actual pressure reading)
+            anomalySensorIds = anomalySensorIds.filter(id => {
+                if (sensorData[id] === 0 || sensorData[id] === undefined) {
+                    return false;
+                }
+                if (id === 'pressure' && sensorData[id] === 1.0) {
+                    return false;
+                }
+                return true;
+            });
+
+            // Update the dashboard with the parsed data and anomalies
+            this.updateDashboardSensors(sensorData, anomalySensorIds);
         } catch (error) {
             console.error('❌ Error parsing sensor data:', error);
         }
     }
     
-    parseAnomalyWarnings(warning1Hex) {
+    parseAnomalyWarnings(warning1Value) {
         try {
             console.log('🚨 ANOMALY DETECTION (Warning1):');
-            console.log(`⚠️  Warning1: ${warning1Hex} (anomaly detection)`);
+            console.log(`⚠️  Warning1: ${warning1Value} (anomaly detection)`);
             
-            const warningValue = this.hexToByte(warning1Hex);
+            const warningValue = typeof warning1Value === 'number' ? warning1Value : parseInt(warning1Value, 10);
             
             console.log(`🔍 Warning1 hex: ${warning1Hex}`);
             console.log(`🔍 Warning1 byte value: ${warningValue}`);
@@ -168,12 +187,12 @@ class MQTTClient {
         }
     }
     
-    parseAnomalyWarningsForWarning2(warning2Hex) {
+    parseAnomalyWarningsForWarning2(warning2Value) {
         try {
             console.log('🚨 ANOMALY DETECTION (Warning2):');
-            console.log(`⚠️  Warning2: ${warning2Hex} (anomaly detection)`);
+            console.log(`⚠️  Warning2: ${warning2Value} (anomaly detection)`);
             
-            const warningValue = this.hexToByte(warning2Hex);
+            const warningValue = typeof warning2Value === 'number' ? warning2Value : parseInt(warning2Value, 10);
             
             console.log(`🔍 Warning2 hex: ${warning2Hex}`);
             console.log(`🔍 Warning2 byte value: ${warningValue}`);
